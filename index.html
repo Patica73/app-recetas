@@ -203,7 +203,7 @@
 
         /* ===== RECIPE GRID ===== */
         .recipes-container {
-            padding: 12px 14px 110px;
+            padding: 12px 14px calc(110px + env(safe-area-inset-bottom, 0px));
         }
 
         .recipe-grid {
@@ -397,8 +397,6 @@
         /* ===== FAB BUTTON ===== */
         .fab {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
             width: 64px;
             height: 64px;
             border-radius: 50%;
@@ -414,10 +412,9 @@
             transition: var(--transition);
             z-index: 90;
             backdrop-filter: blur(8px);
-            /* Respect home indicator on iPhone */
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            bottom: max(24px, calc(16px + env(safe-area-inset-bottom)));
-            right: max(24px, calc(16px + env(safe-area-inset-right)));
+            /* Respect home indicator on iPhone — position only, no padding */
+            bottom: max(24px, calc(20px + env(safe-area-inset-bottom)));
+            right: max(24px, calc(20px + env(safe-area-inset-right)));
         }
 
         .fab:hover {
@@ -2698,104 +2695,4 @@
                 d.classList.toggle('active', i === tutorialCurrentStep);
             });
 
-            const back = document.getElementById('tutBtnBack');
-            back.style.display = tutorialCurrentStep > 0 ? 'flex' : 'none';
-
-            const nextBtn = document.getElementById('tutBtnNext');
-            nextBtn.textContent = tutorialCurrentStep === TUTORIAL_STEPS - 1 ? '¡Empezar! 🚀' : 'Siguiente →';
-        }
-
-        function checkFirstVisit() {
-            if (!localStorage.getItem('tutorial_shown')) {
-                setTimeout(() => openTutorial(), 600);
-            }
-        }
-
-        // ===== SWIPE DOWN TO CLOSE MODALS =====
-        (function setupModalSwipe() {
-            function initSwipe(sheet, closeCallback) {
-                const dragTarget = sheet.querySelector('.modal-drag-zone, .modal-handle, .cat-sheet-handle');
-                if (!dragTarget) return;
-
-                let startY = 0;
-                let currentY = 0;
-                let dragging = false;
-
-                function onTouchStart(e) {
-                    startY = e.touches[0].clientY;
-                    currentY = startY;
-                    dragging = true;
-                    sheet.style.transition = 'none';
-                }
-
-                function onTouchMove(e) {
-                    if (!dragging) return;
-                    currentY = e.touches[0].clientY;
-                    const dy = Math.max(0, currentY - startY);
-                    sheet.style.transform = `translateY(${dy}px)`;
-                }
-
-                function onTouchEnd() {
-                    if (!dragging) return;
-                    dragging = false;
-                    sheet.style.transition = '';
-                    const dy = currentY - startY;
-                    if (dy > 80) {
-                        sheet.style.transform = '';
-                        closeCallback();
-                    } else {
-                        sheet.style.transform = '';
-                    }
-                }
-
-                dragTarget.addEventListener('touchstart', onTouchStart, { passive: true });
-                dragTarget.addEventListener('touchmove', onTouchMove, { passive: true });
-                dragTarget.addEventListener('touchend', onTouchEnd, { passive: true });
-            }
-
-            // Standard modals
-            document.querySelectorAll('.modal-overlay .modal').forEach(modal => {
-                initSwipe(modal, () => {
-                    const overlay = modal.closest('.modal-overlay');
-                    if (overlay) closeModalWithAnimation(overlay.id);
-                });
-            });
-
-            // Category sheet — apply filter on swipe-to-close
-            const catSheet = document.getElementById('catSheet');
-            if (catSheet) initSwipe(catSheet, closeCatSheetAndApply);
-        })();
-        const uploadArea = document.getElementById('uploadArea');
-        if (uploadArea) {
-            ['dragenter', 'dragover'].forEach(evt => {
-                uploadArea.addEventListener(evt, (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.add('dragover');
-                });
-            });
-
-            ['dragleave', 'drop'].forEach(evt => {
-                uploadArea.addEventListener(evt, (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.remove('dragover');
-                });
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    try {
-                        const input = document.getElementById('imageInput');
-                        const dt = new DataTransfer();
-                        dt.items.add(file);
-                        input.files = dt.files;
-                        handleImageUpload({ target: input });
-                    } catch {
-                        handleImageUpload({ target: { files: [file] } });
-                    }
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+            const ba
