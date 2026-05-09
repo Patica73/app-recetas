@@ -41,6 +41,7 @@
             scroll-behavior: smooth;
             -webkit-text-size-adjust: 100%;
             height: -webkit-fill-available;
+            background: var(--primary);
         }
 
         body {
@@ -203,7 +204,7 @@
 
         /* ===== RECIPE GRID ===== */
         .recipes-container {
-            padding: 12px 14px calc(110px + env(safe-area-inset-bottom, 0px));
+            padding: 12px 14px 110px;
         }
 
         .recipe-grid {
@@ -397,6 +398,8 @@
         /* ===== FAB BUTTON ===== */
         .fab {
             position: fixed;
+            bottom: 24px;
+            right: 24px;
             width: 64px;
             height: 64px;
             border-radius: 50%;
@@ -412,9 +415,9 @@
             transition: var(--transition);
             z-index: 90;
             backdrop-filter: blur(8px);
-            /* Respect home indicator on iPhone — position only, no padding */
-            bottom: max(24px, calc(20px + env(safe-area-inset-bottom)));
-            right: max(24px, calc(20px + env(safe-area-inset-right)));
+            /* Respect home indicator on iPhone */
+            bottom: max(24px, calc(16px + env(safe-area-inset-bottom)));
+            right: max(24px, calc(16px + env(safe-area-inset-right)));
         }
 
         .fab:hover {
@@ -2693,6 +2696,4 @@
 
             document.querySelectorAll('.tutorial-dot').forEach((d, i) => {
                 d.classList.toggle('active', i === tutorialCurrentStep);
-            });
-
-            const ba
+            })
