@@ -1191,6 +1191,7 @@
             padding-bottom: calc(20px + env(safe-area-inset-bottom));
             animation: slideUp 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
             box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
+            position: relative;
         }
         .cat-sheet-overlay.closing .cat-sheet {
             animation: slideDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
@@ -1617,6 +1618,7 @@
     <!-- CATEGORY SHEET -->
     <div class="cat-sheet-overlay" id="catSheetOverlay" onclick="handleCatSheetOverlayClick(event)">
         <div class="cat-sheet" id="catSheet">
+            <div class="modal-drag-zone"></div>
             <div class="cat-sheet-handle"></div>
             <div class="cat-sheet-header">
                 <h3>🍽️ Filtrar por categoría</h3>
@@ -1867,7 +1869,7 @@
                 1️⃣ Pulsa el botón <strong>Compartir</strong> <span class="tutorial-pill">⬆️</span> en la barra inferior de Safari<br><br>
                 2️⃣ Desplázate hacia abajo y elige <strong>"Añadir a pantalla de inicio"</strong><br><br>
                 3️⃣ Ponle el nombre que quieras y pulsa <strong>"Añadir"</strong></p>
-                <div class="tutorial-tip green">📲 Una vez instalada, se abre a pantalla completa. <strong>Ojo:</strong> los datos <em>no</em> están completamente aislados — si eliminas la app de la pantalla de inicio o borras los datos del sitio en Ajustes → Safari, las recetas se perderán. Por eso es importante guardar siempre una copia en Archivos.</div>
+                <div class="tutorial-tip green">📲 Una vez instalada, se abre a pantalla completa sin barras de Safari. <strong>Ojo:</strong> los datos <em>no</em> están completamente aislados — si eliminas la app de la pantalla de inicio o borras los datos del sitio en Ajustes → Safari, las recetas se perderán. Por eso es importante guardar siempre una copia en Archivos.</div>
             </div>
 
             <!-- PASO 7: ¡Listo! -->
@@ -2140,6 +2142,36 @@
             document.body.style.overflow = 'hidden';
         }
 
+        function _commitCatFilter() {
+            // Read whatever is selected in the sheet and apply it
+            selectedCats = new Set(
+                [...document.querySelectorAll('.cat-sheet-item.selected')].map(i => i.dataset.cat)
+            );
+
+            const catBtn = document.getElementById('catBtn');
+            const catBtnLabel = document.getElementById('catBtnLabel');
+            if (selectedCats.size === 0) {
+                catBtn.classList.remove('active');
+                catBtnLabel.textContent = '🍽️ Categorías';
+                // Reset to "Todas"
+                activeFilter = 'all';
+                document.querySelectorAll('.filter-chip').forEach(chip => {
+                    chip.classList.toggle('active', chip.dataset.filter === 'all');
+                });
+            } else if (selectedCats.size === 1) {
+                catBtn.classList.add('active');
+                catBtnLabel.textContent = [...selectedCats][0];
+                activeFilter = '__cats__';
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            } else {
+                catBtn.classList.add('active');
+                catBtnLabel.textContent = `🍽️ ${selectedCats.size} categorías`;
+                activeFilter = '__cats__';
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            }
+            renderRecipes();
+        }
+
         function closeCatSheet() {
             const overlay = document.getElementById('catSheetOverlay');
             overlay.classList.add('closing');
@@ -2149,8 +2181,13 @@
             }, { once: true });
         }
 
+        function closeCatSheetAndApply() {
+            _commitCatFilter();
+            closeCatSheet();
+        }
+
         function handleCatSheetOverlayClick(e) {
-            if (e.target === document.getElementById('catSheetOverlay')) closeCatSheet();
+            if (e.target === document.getElementById('catSheetOverlay')) closeCatSheetAndApply();
         }
 
         function toggleCatItem(btn) {
@@ -2162,34 +2199,7 @@
         }
 
         function applyCatFilter() {
-            selectedCats = new Set(
-                [...document.querySelectorAll('.cat-sheet-item.selected')].map(i => i.dataset.cat)
-            );
-            closeCatSheet();
-
-            // Update button label
-            const catBtn = document.getElementById('catBtn');
-            const catBtnLabel = document.getElementById('catBtnLabel');
-            if (selectedCats.size === 0) {
-                catBtn.classList.remove('active');
-                catBtnLabel.textContent = '🍽️ Categorías';
-            } else if (selectedCats.size === 1) {
-                catBtn.classList.add('active');
-                catBtnLabel.textContent = [...selectedCats][0];
-            } else {
-                catBtn.classList.add('active');
-                catBtnLabel.textContent = `🍽️ ${selectedCats.size} categorías`;
-            }
-
-            // Deactivate Todas/Favoritas chips if cats selected
-            if (selectedCats.size > 0) {
-                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                activeFilter = '__cats__';
-            } else {
-                setFilter('all');
-                return;
-            }
-            renderRecipes();
+            closeCatSheetAndApply();
         }
 
         function setFilter(value) {
@@ -2751,9 +2761,9 @@
                 });
             });
 
-            // Category sheet
+            // Category sheet — apply filter on swipe-to-close
             const catSheet = document.getElementById('catSheet');
-            if (catSheet) initSwipe(catSheet, closeCatSheet);
+            if (catSheet) initSwipe(catSheet, closeCatSheetAndApply);
         })();
         const uploadArea = document.getElementById('uploadArea');
         if (uploadArea) {
