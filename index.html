@@ -1867,7 +1867,7 @@
                 1️⃣ Pulsa el botón <strong>Compartir</strong> <span class="tutorial-pill">⬆️</span> en la barra inferior de Safari<br><br>
                 2️⃣ Desplázate hacia abajo y elige <strong>"Añadir a pantalla de inicio"</strong><br><br>
                 3️⃣ Ponle el nombre que quieras y pulsa <strong>"Añadir"</strong></p>
-                <div class="tutorial-tip green">✅ Una vez instalada, se abre a pantalla completa sin barras de Safari, y sus datos están <strong>aislados</strong> del navegador. Borrar el historial de Safari no afecta a las recetas.</div>
+                <div class="tutorial-tip green">📲 Una vez instalada, se abre a pantalla completa. <strong>Ojo:</strong> los datos <em>no</em> están completamente aislados — si eliminas la app de la pantalla de inicio o borras los datos del sitio en Ajustes → Safari, las recetas se perderán. Por eso es importante guardar siempre una copia en Archivos.</div>
             </div>
 
             <!-- PASO 7: ¡Listo! -->
@@ -2703,9 +2703,8 @@
 
         // ===== SWIPE DOWN TO CLOSE MODALS =====
         (function setupModalSwipe() {
-            function initSwipe(modal) {
-                // Use the wide drag zone if present, otherwise fall back to handle
-                const dragTarget = modal.querySelector('.modal-drag-zone') || modal.querySelector('.modal-handle');
+            function initSwipe(sheet, closeCallback) {
+                const dragTarget = sheet.querySelector('.modal-drag-zone, .modal-handle, .cat-sheet-handle');
                 if (!dragTarget) return;
 
                 let startY = 0;
@@ -2716,27 +2715,26 @@
                     startY = e.touches[0].clientY;
                     currentY = startY;
                     dragging = true;
-                    modal.style.transition = 'none';
+                    sheet.style.transition = 'none';
                 }
 
                 function onTouchMove(e) {
                     if (!dragging) return;
                     currentY = e.touches[0].clientY;
                     const dy = Math.max(0, currentY - startY);
-                    modal.style.transform = `translateY(${dy}px)`;
+                    sheet.style.transform = `translateY(${dy}px)`;
                 }
 
                 function onTouchEnd() {
                     if (!dragging) return;
                     dragging = false;
-                    modal.style.transition = '';
+                    sheet.style.transition = '';
                     const dy = currentY - startY;
                     if (dy > 80) {
-                        modal.style.transform = '';
-                        const overlay = modal.closest('.modal-overlay');
-                        if (overlay) closeModalWithAnimation(overlay.id);
+                        sheet.style.transform = '';
+                        closeCallback();
                     } else {
-                        modal.style.transform = '';
+                        sheet.style.transform = '';
                     }
                 }
 
@@ -2745,7 +2743,17 @@
                 dragTarget.addEventListener('touchend', onTouchEnd, { passive: true });
             }
 
-            document.querySelectorAll('.modal-overlay .modal').forEach(initSwipe);
+            // Standard modals
+            document.querySelectorAll('.modal-overlay .modal').forEach(modal => {
+                initSwipe(modal, () => {
+                    const overlay = modal.closest('.modal-overlay');
+                    if (overlay) closeModalWithAnimation(overlay.id);
+                });
+            });
+
+            // Category sheet
+            const catSheet = document.getElementById('catSheet');
+            if (catSheet) initSwipe(catSheet, closeCatSheet);
         })();
         const uploadArea = document.getElementById('uploadArea');
         if (uploadArea) {
