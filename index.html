@@ -709,6 +709,10 @@
             bottom: 0;
             background: var(--bg-modal);
             border-top: 1px solid var(--border);
+            z-index: 10;
+            /* Evita que el contenido de debajo se cuele por los bordes
+               cuando el modal está centrado en iPad/desktop */
+            margin-bottom: 0;
         }
 
         .btn {
@@ -1095,6 +1099,17 @@
             .recipe-card-image-placeholder { font-size: 48px; }
             .modal { border-radius: 28px; margin-bottom: 24px; max-height: 85dvh; }
             .modal-overlay { align-items: center; }
+            /* En iPad el modal tiene bordes redondeados en las 4 esquinas.
+               form-buttons y view-actions deben respetar esos bordes inferiores
+               para que su fondo no "se salga" por las esquinas redondeadas. */
+            .form-buttons {
+                border-radius: 0 0 28px 28px;
+                padding-bottom: 28px;
+            }
+            .view-actions {
+                border-radius: 0 0 28px 28px;
+                padding-bottom: 28px;
+            }
         }
 
         /* ===== CATEGORY FILTER BAR ===== */
