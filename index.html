@@ -474,14 +474,21 @@
             /* Use dvh for proper iPhone standalone height */
             max-height: 90dvh;
             border-radius: 28px 28px 0 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .modal-body {
+            padding: 22px;
             overflow-y: auto;
             overflow-x: hidden;
-            animation: slideUp 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
             -webkit-overflow-scrolling: touch;
-            box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
-            /* Padding for home indicator */
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            position: relative;
+            flex: 1 1 auto;
+            min-height: 0;
         }
 
         .modal-overlay.closing .modal {
@@ -520,8 +527,7 @@
             align-items: center;
             padding: 8px 22px 18px;
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
+            flex-shrink: 0;
             background: var(--bg-modal);
             z-index: 10;
         }
@@ -703,16 +709,12 @@
         .form-buttons {
             display: flex;
             gap: 14px;
-            padding: 18px 22px 32px;
-            padding-bottom: calc(32px + env(safe-area-inset-bottom));
-            position: sticky;
-            bottom: 0;
+            padding: 18px 22px;
+            padding-bottom: max(22px, calc(18px + env(safe-area-inset-bottom)));
+            flex-shrink: 0;
             background: var(--bg-modal);
             border-top: 1px solid var(--border);
             z-index: 10;
-            /* Evita que el contenido de debajo se cuele por los bordes
-               cuando el modal está centrado en iPad/desktop */
-            margin-bottom: 0;
         }
 
         .btn {
@@ -763,6 +765,17 @@
             border-radius: 28px 28px 0 0;
         }
 
+        /* viewContent ocupa el espacio flex restante y hace scroll internamente */
+        #viewContent {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+        }
+
         .view-image {
             width: 100%;
             height: 280px;
@@ -781,6 +794,11 @@
 
         .view-content {
             padding: 22px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            flex: 1 1 auto;
+            min-height: 0;
         }
 
         .view-category {
@@ -847,9 +865,9 @@
         .view-actions {
             display: flex;
             gap: 12px;
-            padding: 18px 22px 30px;
-            position: sticky;
-            bottom: 0;
+            padding: 18px 22px;
+            padding-bottom: max(22px, calc(18px + env(safe-area-inset-bottom)));
+            flex-shrink: 0;
             background: var(--bg-modal);
             border-top: 1px solid var(--border);
         }
@@ -1100,12 +1118,8 @@
             .modal { border-radius: 28px; margin-bottom: 24px; max-height: 85dvh; }
             .modal-overlay { align-items: center; }
             /* En iPad el modal tiene bordes redondeados en las 4 esquinas.
-               form-buttons y view-actions deben respetar esos bordes inferiores
-               para que su fondo no "se salga" por las esquinas redondeadas. */
-            .form-buttons {
-                border-radius: 0 0 28px 28px;
-                padding-bottom: 28px;
-            }
+               form-buttons y view-actions deben respetar esos bordes inferiores. */
+            .form-buttons,
             .view-actions {
                 border-radius: 0 0 28px 28px;
                 padding-bottom: 28px;
@@ -1594,10 +1608,7 @@
             margin-top: 10px;
         }
 
-        /* ===== FIX: view-actions safe-area ===== */
-        .view-actions {
-            padding-bottom: max(30px, calc(18px + env(safe-area-inset-bottom)));
-        }
+        /* ===== FIX: view-actions safe-area — gestionado por flexbox en .modal ===== */
 
         /* ===== FIX: Chrome PWA standalone en iOS =====
            En modo standalone Chrome no hereda correctamente el safe-area del header
@@ -2497,11 +2508,21 @@
                         <pre>${escapeHtml(recipe.notes)}</pre>
                     </div>` : ''}
                 </div>
-                <div class="view-actions">
-                    <button class="btn btn-secondary" onclick="editRecipe('${recipe.id}'); closeViewModal();">✏️ Editar</button>
-                    <button class="btn btn-primary" onclick="shareRecipe('${recipe.id}')">📤 Compartir</button>
-                </div>
             `;
+
+            // Sacar view-actions fuera del área scrolleable, como hijo directo del modal
+            const viewModal = document.getElementById('viewModal');
+            const modalEl = viewModal.querySelector('.modal');
+            // Eliminar view-actions previo si existe
+            const oldActions = modalEl.querySelector('.view-actions');
+            if (oldActions) oldActions.remove();
+            const actionsEl = document.createElement('div');
+            actionsEl.className = 'view-actions';
+            actionsEl.innerHTML = `
+                <button class="btn btn-secondary" onclick="editRecipe('${recipe.id}'); closeViewModal();">✏️ Editar</button>
+                <button class="btn btn-primary" onclick="shareRecipe('${recipe.id}')">📤 Compartir</button>
+            `;
+            modalEl.appendChild(actionsEl);
 
             document.getElementById('viewModal').classList.add('active');
             document.body.style.overflow = 'hidden';
