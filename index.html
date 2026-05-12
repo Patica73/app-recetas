@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="theme-color" content="#ff6b6b">
     <title>📖 Mi Libreta de Recetas</title>
@@ -48,7 +49,6 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
-            /* dvh = dynamic viewport height: se adapta a la barra de Chrome/Safari */
             min-height: 100vh;
             min-height: 100dvh;
             overflow-x: hidden;
@@ -60,6 +60,7 @@
         .header {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             padding: 20px 20px 30px;
+            padding-top: calc(20px + env(safe-area-inset-top));
             padding-left: calc(20px + env(safe-area-inset-left));
             padding-right: calc(20px + env(safe-area-inset-right));
             position: sticky;
@@ -204,7 +205,7 @@
 
         /* ===== RECIPE GRID ===== */
         .recipes-container {
-            padding: 12px 14px calc(110px + env(safe-area-inset-bottom, 0px) + var(--browser-bar-height, 0px));
+            padding: 12px 14px 110px;
         }
 
         .recipe-grid {
@@ -415,8 +416,8 @@
             transition: var(--transition);
             z-index: 90;
             backdrop-filter: blur(8px);
-            /* Respetar barra inferior de Chrome/Safari y el home indicator */
-            bottom: calc(24px + env(safe-area-inset-bottom, 0px) + var(--browser-bar-height, 0px));
+            /* Respect home indicator on iPhone */
+            bottom: max(24px, calc(16px + env(safe-area-inset-bottom)));
             right: max(24px, calc(16px + env(safe-area-inset-right)));
         }
 
@@ -442,15 +443,16 @@
             display: none;
             align-items: flex-end;
             justify-content: center;
+            animation: overlayIn 0.3s ease;
+            /* Fix for iOS standalone: ensure overlay covers full screen */
+            height: 100%;
         }
 
         .modal-overlay.active {
             display: flex;
-            animation: overlayIn 0.3s ease;
         }
 
         .modal-overlay.closing {
-            display: flex;
             animation: overlayOut 0.38s ease forwards;
             pointer-events: none;
         }
@@ -469,21 +471,17 @@
             background: var(--bg-modal);
             width: 100%;
             max-width: 620px;
-            /* Use svh/dvh with fallback for proper iPhone height */
-            max-height: 90vh;
+            /* Use dvh for proper iPhone standalone height */
             max-height: 90dvh;
             border-radius: 28px 28px 0 0;
             overflow-y: auto;
             overflow-x: hidden;
+            animation: slideUp 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
             -webkit-overflow-scrolling: touch;
             box-shadow: 0 -8px 30px rgba(0,0,0,0.1);
             /* Padding for home indicator */
             padding-bottom: env(safe-area-inset-bottom, 0px);
             position: relative;
-        }
-
-        .modal-overlay.active .modal {
-            animation: slideUp 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
         }
 
         .modal-overlay.closing .modal {
@@ -903,6 +901,7 @@
         .toast-container {
             position: fixed;
             top: 20px;
+            top: max(20px, calc(8px + env(safe-area-inset-top)));
             left: 50%;
             transform: translateX(-50%);
             z-index: 999;
@@ -1094,7 +1093,7 @@
             .recipe-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; }
             .recipe-card-image, .recipe-card-image-placeholder { height: 140px; }
             .recipe-card-image-placeholder { font-size: 48px; }
-            .modal { border-radius: 28px; margin-bottom: 24px; max-height: 85vh; }
+            .modal { border-radius: 28px; margin-bottom: 24px; max-height: 85dvh; }
             .modal-overlay { align-items: center; }
         }
 
@@ -1362,8 +1361,10 @@
         /* ===== SAVE BADGE (iOS auto-backup) ===== */
         .save-badge {
             position: fixed;
-            bottom: calc(30px + env(safe-area-inset-bottom, 0px) + var(--browser-bar-height, 0px));
-            left: calc(24px + env(safe-area-inset-left, 0px));
+            bottom: 30px;
+            bottom: calc(30px + env(safe-area-inset-bottom));
+            left: 24px;
+            left: calc(24px + env(safe-area-inset-left));
             background: linear-gradient(135deg, var(--accent), var(--accent-dark));
             color: white;
             border-radius: 22px;
@@ -1413,10 +1414,7 @@
             justify-content: center;
         }
 
-        .tutorial-overlay.active {
-            display: flex;
-            animation: overlayIn 0.3s ease;
-        }
+        .tutorial-overlay.active { display: flex; }
 
         .tutorial-card {
             background: white;
@@ -1425,12 +1423,9 @@
             border-radius: 32px 32px 0 0;
             padding: 10px 26px 36px;
             padding-bottom: calc(36px + env(safe-area-inset-bottom));
-            max-height: 88vh;
-            overflow-y: auto;
-        }
-
-        .tutorial-overlay.active .tutorial-card {
             animation: slideUp 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+            max-height: 88dvh;
+            overflow-y: auto;
         }
 
         .tutorial-handle {
@@ -1582,6 +1577,35 @@
             color: #991b1b;
             line-height: 1.6;
             margin-top: 10px;
+        }
+
+        /* ===== FIX: view-actions safe-area ===== */
+        .view-actions {
+            padding-bottom: max(30px, calc(18px + env(safe-area-inset-bottom)));
+        }
+
+        /* ===== FIX: Chrome PWA standalone en iOS =====
+           En modo standalone Chrome no hereda correctamente el safe-area del header
+           cuando apple-mobile-web-app-status-bar-style es black-translucent.
+           Con "black" la status bar tiene fondo sólido y el layout es predecible.
+           Este bloque añade protección extra por si el navegador lo necesita. */
+        @media (display-mode: standalone) {
+            .header {
+                padding-top: calc(20px + env(safe-area-inset-top));
+            }
+            .fab {
+                bottom: max(24px, calc(16px + env(safe-area-inset-bottom)));
+            }
+            .toast-container {
+                top: max(20px, calc(10px + env(safe-area-inset-top)));
+            }
+            .modal-overlay,
+            .cat-sheet-overlay,
+            .confirm-overlay,
+            .tutorial-overlay {
+                top: 0;
+                height: 100%;
+            }
         }
     </style>
 </head>
@@ -1913,58 +1937,6 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        // ===== CHROME iOS BOTTOM BAR FIX =====
-        // La barra de Chrome en iOS no expone safe-area-inset-bottom.
-        // Usamos el Visual Viewport API para calcular el espacio real disponible
-        // y lo exponemos como una variable CSS --browser-bar-height.
-        (function chromeBottomBarFix() {
-            function updateViewportVar() {
-                const vv = window.visualViewport;
-                if (!vv) return;
-                // La diferencia entre window.innerHeight y visualViewport.height
-                // equivale al espacio ocupado por la barra del navegador.
-                const barHeight = Math.max(0, window.innerHeight - vv.height);
-                document.documentElement.style.setProperty('--browser-bar-height', barHeight + 'px');
-            }
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', updateViewportVar);
-                window.visualViewport.addEventListener('scroll', updateViewportVar);
-            }
-            window.addEventListener('resize', updateViewportVar);
-            updateViewportVar();
-        })();
-
-        // ===== iOS STANDALONE TOUCH FIX =====
-        // En modo PWA (standalone), usar body overflow:hidden para bloquear scroll
-        // desalinea los eventos táctiles de los position:fixed en iOS.
-        // Solución: interceptar el scroll de fondo con un listener pasivo en lugar
-        // de overflow:hidden, y usar scroll-position lock.
-        const isIOSStandalone = ('standalone' in navigator && navigator.standalone);
-        let _scrollLockY = 0;
-
-        function lockBodyScroll() {
-            if (isIOSStandalone) {
-                // En standalone: fijar posición sin overflow:hidden
-                _scrollLockY = window.scrollY;
-                document.body.style.position = 'fixed';
-                document.body.style.top = `-${_scrollLockY}px`;
-                document.body.style.width = '100%';
-            } else {
-                document.body.style.overflow = 'hidden';
-            }
-        }
-
-        function unlockBodyScroll() {
-            if (isIOSStandalone) {
-                document.body.style.position = '';
-                document.body.style.top = '';
-                document.body.style.width = '';
-                window.scrollTo(0, _scrollLockY);
-            } else {
-                document.body.style.overflow = '';
-            }
-        }
-
         // ===== APP STATE =====
         let recipes = [];
         let currentImageData = null;
@@ -2110,7 +2082,7 @@
         // ===== DATA MODAL =====
         function openDataModal() {
             document.getElementById('dataModal').classList.add('active');
-            lockBodyScroll();
+            document.body.style.overflow = 'hidden';
         }
 
         // ===== RENDER =====
@@ -2196,7 +2168,7 @@
             const overlay = document.getElementById('catSheetOverlay');
             overlay.classList.remove('closing');
             overlay.classList.add('open');
-            lockBodyScroll();
+            document.body.style.overflow = 'hidden';
         }
 
         function _commitCatFilter() {
@@ -2234,7 +2206,7 @@
             overlay.classList.add('closing');
             overlay.addEventListener('animationend', () => {
                 overlay.classList.remove('open', 'closing');
-                unlockBodyScroll();
+                document.body.style.overflow = '';
             }, { once: true });
         }
 
@@ -2375,7 +2347,7 @@
             document.getElementById('recipeNotes').value = '';
             removeImage();
             document.getElementById('formModal').classList.add('active');
-            lockBodyScroll();
+            document.body.style.overflow = 'hidden';
         }
 
         function editRecipe(id) {
@@ -2403,7 +2375,7 @@
             }
 
             document.getElementById('formModal').classList.add('active');
-            lockBodyScroll();
+            document.body.style.overflow = 'hidden';
         }
 
         async function saveRecipe() {
@@ -2517,7 +2489,7 @@
             `;
 
             document.getElementById('viewModal').classList.add('active');
-            lockBodyScroll();
+            document.body.style.overflow = 'hidden';
         }
 
         function shareRecipe(id) {
@@ -2614,7 +2586,7 @@
             overlay.classList.add('closing');
             overlay.addEventListener('animationend', () => {
                 overlay.classList.remove('active', 'closing');
-                unlockBodyScroll();
+                document.body.style.overflow = '';
             }, { once: true });
         }
 
@@ -2711,7 +2683,7 @@
             buildTutorialDots();
             updateTutorialStep();
             document.getElementById('tutorialOverlay').classList.add('active');
-            lockBodyScroll();
+            document.body.style.overflow = 'hidden';
         }
 
         function closeTutorial() {
@@ -2720,7 +2692,7 @@
             card.addEventListener('animationend', () => {
                 document.getElementById('tutorialOverlay').classList.remove('active');
                 card.classList.remove('closing');
-                unlockBodyScroll();
+                document.body.style.overflow = '';
             }, { once: true });
             try { localStorage.setItem('tutorial_shown', '1'); } catch {}
         }
