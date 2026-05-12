@@ -16,6 +16,7 @@
             margin: 0;
             padding: 0;
         }
+
     :root {
         --primary: #2563eb;
         --primary-dark: #1d4ed8;
@@ -519,6 +520,7 @@
         cursor: grab;
         z-index: 5;
         touch-action: pan-y;
+        pointer-events: none;
     }
 
     .modal-header {
@@ -2881,9 +2883,33 @@
             });
         });
 
-        // Category sheet — apply filter on swipe-to-close
+        // Category sheet — solo usar el handle visible, no el drag-zone que tapa el botón Limpiar
         const catSheet = document.getElementById('catSheet');
-        if (catSheet) initSwipe(catSheet, closeCatSheetAndApply);
+        if (catSheet) {
+            const catHandle = catSheet.querySelector('.cat-sheet-handle, .modal-drag-zone');
+            if (catHandle) {
+                // Parchear initSwipe para que solo use el handle del cat sheet
+                let startY = 0, currentY = 0, dragging = false;
+                catHandle.style.pointerEvents = 'auto';
+                catHandle.addEventListener('touchstart', e => {
+                    startY = e.touches[0].clientY; currentY = startY; dragging = true;
+                    catSheet.style.transition = 'none';
+                }, { passive: true });
+                catHandle.addEventListener('touchmove', e => {
+                    if (!dragging) return;
+                    currentY = e.touches[0].clientY;
+                    const dy = Math.max(0, currentY - startY);
+                    catSheet.style.transform = `translateY(${dy}px)`;
+                }, { passive: true });
+                catHandle.addEventListener('touchend', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    catSheet.style.transition = '';
+                    if (currentY - startY > 80) { catSheet.style.transform = ''; closeCatSheetAndApply(); }
+                    else catSheet.style.transform = '';
+                }, { passive: true });
+            }
+        }
     })();
     const uploadArea = document.getElementById('uploadArea');
     if (uploadArea) {
